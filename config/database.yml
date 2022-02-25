@@ -1,0 +1,23 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <<: *default
+  pool: 5
+  username: "postgres"
+  password: 123456
+  timeout: 5000
+  host: "localhost"
+  database: cuvantar
+
+test:
+  <<: *default
+  database: cuvantar_test
+
+production:
+  <<: *default
+  database: WordleNativeBackend_production
+  username: WordleNativeBackend
+  password: <%= ENV["WORDLENATIVEBACKEND_DATABASE_PASSWORD"] %>
