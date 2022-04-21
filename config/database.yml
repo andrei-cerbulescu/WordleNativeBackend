@@ -7,7 +7,7 @@ development:
   <<: *default
   pool: 5
   username: "postgres"
-  password: 123456
+  password: '123456'
   timeout: 5000
   host: "localhost"
   database: cuvantar
@@ -15,6 +15,8 @@ development:
 test:
   <<: *default
   database: cuvantar_test
+  username: "postgres"
+  password: '123456'
 
 production:
   <<: *default

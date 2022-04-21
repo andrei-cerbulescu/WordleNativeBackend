@@ -1,5 +1,6 @@
 class WordsController < ApplicationController
   def get
-    render status: 200
+    word = Word.order(Arel.sql('RANDOM()')).first
+    render word.to_json
   end
 end
