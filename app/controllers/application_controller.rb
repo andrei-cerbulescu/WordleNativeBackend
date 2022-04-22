@@ -1,28 +1,20 @@
 class ApplicationController < ActionController::Base
   skip_before_action :verify_authenticity_token
-  before_action :current_user
 
-  def login!
-    session[:user_id] = @user.id
+  def not_found
+    render json: { error: 'not_found' }
   end
 
-  def logged_in?
-    !!session[:user_id]
-  end
-
-  def current_user
-    @current_user ||= User.find(session[:user_id]) if session[:user_id]
-  end
-
-  def authorized_user?
-      @user == current_user
-  end
-
-  def logout!
-      session.clear
-  end
-
-  def set_user
-    @user = User.find_by(id: session[:user_id])
+  def validate_user
+    header = request.headers['Authorization']
+    header = header.split(' ').last if header
+    begin
+      @decoded = JsonWebToken.decode(header)
+      @current_user = User.find(@decoded[:user_id]) unless @decoded.nil?
+    end
+    if @current_user.nil?
+      render json: {error: 'Invalid login token'}, status: :unauthorized 
+      return false
+    end
   end
 end
