@@ -1,6 +1,4 @@
 class Word < ApplicationRecord
-  def caluleaza_ratio
-    return 0 unless thumbs_up && thumbs_down
-    return thumbs_up.to_f/thumbs_down
-  end
+  belongs_to :user, class_name: "User", foreign_key: "user_id"
+  validates :word, uniqueness: true
 end
