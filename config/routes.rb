@@ -6,5 +6,5 @@ Rails.application.routes.draw do
   post '/login', to: 'authentication#login'
 
   get '/get_current_user', to: 'users#get_current_user'
-  post 'register', to: 'users#create'
+  post '/register', to: 'users#create'
 end

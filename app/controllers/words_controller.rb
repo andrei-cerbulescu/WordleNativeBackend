@@ -3,7 +3,7 @@ class WordsController < ApplicationController
 
   def get
     word = Word.order(Arel.sql('RANDOM()')).first
-    @current_user.update(last_word_id: word.id)
+    @current_user.update!(last_word_id: word.id)
     response = ActiveModelSerializers::SerializableResource.new(
       word,
       serializer: WordSerializer
