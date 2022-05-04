@@ -36,14 +36,14 @@ class WordsController < ApplicationController
 
   def rate
     word_id = params[:word_id]
-    if @current_user.last_word_id != word_id
+    if @current_user.last_word_id.to_i != word_id.to_i
       render json: {'error': 'Invalid word_id'}, status: :not_found
       return
     end
 
     word = Word.where(id: word_id).first
 
-    if params[:rating]>0
+    if params[:rating].to_i>0
       word.update(thumbs_up: (word.thumbs_up || 0)+1)
     else
       word.update(thumbs_up: (word.thumbs_down || 0)+1)
