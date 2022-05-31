@@ -7,4 +7,5 @@ Rails.application.routes.draw do
 
   get '/get_current_user', to: 'users#get_current_user'
   post '/register', to: 'users#create'
+
 end
