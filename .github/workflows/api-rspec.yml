@@ -1,11 +1,13 @@
 name: CI RSpec Tests
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+on: [push]
 
-    # If you need DB like PostgreSQL, Redis then define service below.
-    # https://github.com/actions/example-services/tree/master/.github/workflows
+jobs:
+  rspec:
+   runs-on: ubuntu-latest
+    container:
+      image: ruby:3.1.2
+
     services:
       postgres:
         image: postgres:10.8
@@ -14,51 +16,55 @@ jobs:
           POSTGRES_PASSWORD: "123456"
           POSTGRES_DB: postgres
         ports:
-          - 5432:5432
-        options: >-
-          --mount type=tmpfs,destination=/var/lib/postgresql/data
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis
-        ports:
-          - 6379:6379
-        options: --entrypoint redis-server
-
-    strategy:
-      fail-fast: false
-      matrix:
-        ci_node_total: [8]
-        ci_node_index: [0, 1, 2, 3, 4, 5, 6, 7]
-
-    env:
-      RAILS_ENV: test
-      GEMFILE_RUBY_VERSION: 3.1.2
-      PGHOST: localhost
-      PGUSER: postgres
-      TZ: "Europe/Warsaw"
+        - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v1
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.1.2
-          bundler-cache: true
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '10.x'
+        registry-url: 'https://registry.npmjs.org'
 
-      - name: Create DB
-        run: |
-          bin/rails db:prepare
-      - name: Run tests
-        env:
-          KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC: ${{ secrets.KNAPSACK_PRO_TEST_SUITE_TOKEN_RSPEC }}
-          KNAPSACK_PRO_CI_NODE_TOTAL: ${{ matrix.ci_node_total }}
-          KNAPSACK_PRO_CI_NODE_INDEX: ${{ matrix.ci_node_index }}
-          KNAPSACK_PRO_LOG_LEVEL: info
-          KNAPSACK_PRO_FIXED_QUEUE_SPLIT: true
-          KNAPSACK_PRO_RSPEC_SPLIT_BY_TEST_EXAMPLES: true
-        run: |
-          bundle exec rake knapsack_pro:queue:rspec
+    - name: Gem cache
+      id: cache-bundle
+      uses: actions/cache@v1
+      with:
+        path: vendor/bundle
+        key: bundle-${{ hashFiles('**/Gemfile.lock') }}
+
+    - name: Bundle install
+      env:
+        RAILS_ENV: test
+      run: |
+        gem install bundler
+        bundle install --jobs 4 --retry 3 --path vendor/bundle
+    - name: Install yarn
+      run: npm install -g yarn
+
+    - name: Get yarn cache dir
+      id: yarn-cache-dir
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+
+    - name: Yarn cache
+      id: cache-yarn
+      uses: actions/cache@v1
+      with:
+        path: ${{ steps.yarn-cache-dir.outputs.dir }}
+        key: yarn-${{ hashFiles('**/yarn.lock') }}
+
+    - name: Yarn install
+      run: yarn install
+
+    - name: Setup DB, Run tests
+      env:
+        PGHOST: postgres
+        PGUSER: postgres
+        PGPASSWORD: "123456"
+        PGPORT: ${{ job.services.postgres.ports[5432] }}
+        RAILS_ENV: test
+      run: |
+        bin/rails db:create db:schema:load
+        bundle exec rspec
