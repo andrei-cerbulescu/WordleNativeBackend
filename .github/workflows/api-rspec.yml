@@ -38,9 +38,7 @@ jobs:
           PGHOST: localhost
           PGUSER: postgres
           PGPASSWORD: '123456'
-        run: /
-          git update-index --chmod=+x bin/rails
-          bin/rails db:create db:schema:load
+        run: bin/rails db:create db:schema:load
 
       - name: Build and test with rspec
         working-directory: ${{env.api-dir}}
