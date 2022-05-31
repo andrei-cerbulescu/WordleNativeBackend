@@ -36,7 +36,7 @@ jobs:
           RAILS_ENV: test
           PGHOST: localhost
           PGUSER: postgres
-        run: bin/rails db:create db:schema:load
+        run: sudo bin/rails db:create db:schema:load
 
       - name: Build and test with rspec
         working-directory: ${{env.api-dir}}
